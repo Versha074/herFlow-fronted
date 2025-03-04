@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { signupSuccess, authFailure } from '../store/authSlice';
+import { signupSuccess, authFailure } from '../features/auth/authSlice';
 import { signup } from '../api/authApi';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -15,10 +15,10 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = await signup({ name, email, password });
+      const data = await signup({ username:name, email, password });
       dispatch(signupSuccess(data.user));
       toast.success('Signed up successfully');
-      navigate('/home');
+      navigate('/track');
     } catch (error) {
       dispatch(authFailure(error.message));
       toast.error('Signup failed');

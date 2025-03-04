@@ -8,6 +8,6 @@ export const login = async (credentials) => {
 };
 
 export const signup = async (userData) => {
-  const response = await axios.post(`${API_URL}/signup`, userData);
+  const response = await axios.post(`${API_URL}/register`, userData);
   return response.data; // Expecting { user } or adjust based on your API
 };

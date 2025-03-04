@@ -4,6 +4,9 @@ import './index.css'
 import App from './App.jsx'
 import store from './store.js'
 import { Toaster } from 'react-hot-toast'
+import { Provider } from 'react-redux'
+import "regenerator-runtime/runtime";
+
 
 createRoot(document.getElementById('root')).render(
   <Provider store={store}>

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { loginSuccess, authFailure } from '../store/authSlice';
+import { loginSuccess, authFailure } from '../features/auth/authSlice';
 import { login } from '../api/authApi';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('jaskaran@gmail.com');
+  const [password, setPassword] = useState('jaskaran');
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -17,7 +17,7 @@ function Login() {
       const data = await login({ email, password });
       dispatch(loginSuccess(data.user));
       toast.success('Logged in successfully');
-      navigate('/home');
+      navigate('/track');
     } catch (error) {
       dispatch(authFailure(error.message));
       toast.error('Login failed');
