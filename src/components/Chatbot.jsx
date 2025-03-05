@@ -1,13 +1,44 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 export default function Chatbot() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isMaximized, setIsMaximized] = useState(false); // New state for maximization
+    const [isMaximized, setIsMaximized] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
-    const userId = "67c5e2852a40474f71166da0"; // Replace with a unique user identifier
+    const [isListening, setIsListening] = useState(false);
+    const [isSpeechSupported, setIsSpeechSupported] = useState(true);
+    const userId = "67c5e2852a40474f71166da0";
+    const recognition = useRef(null);
+
+    // Initialize speech recognition
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition.current = new SpeechRecognition();
+            recognition.current.continuous = false;
+            recognition.current.interimResults = false;
+            recognition.current.lang = 'en-US';
+
+            recognition.current.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                sendMessage(transcript);
+                setIsListening(false);
+            };
+
+            recognition.current.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                setIsListening(false);
+            };
+
+            recognition.current.onend = () => {
+                setIsListening(false);
+            };
+        } else {
+            setIsSpeechSupported(false);
+        }
+    }, []);
 
     // Fetch chat history on component mount
     useEffect(() => {
@@ -22,24 +53,17 @@ export default function Chatbot() {
         fetchChatHistory();
     }, [userId]);
 
-    // Function to toggle chat visibility
     const toggleChat = () => {
         setIsOpen(!isOpen);
-        if (!isOpen) {
-            setIsMaximized(false); // Reset maximization when opening
-        }
+        if (!isOpen) setIsMaximized(false);
     };
 
-    // Function to toggle maximization
-    const toggleMaximize = () => {
-        setIsMaximized(!isMaximized);
-    };
+    const toggleMaximize = () => setIsMaximized(!isMaximized);
 
-    // Function to handle user input and start chat with backend
-    const startChat = async () => {
-        if (!input.trim()) return;
+    const sendMessage = async (messageText) => {
+        if (!messageText.trim()) return;
 
-        const userMessage = { text: input, sender: "user" };
+        const userMessage = { text: messageText, sender: "user" };
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
         setLoading(true);
@@ -47,7 +71,7 @@ export default function Chatbot() {
         try {
             const response = await axios.post("http://localhost:5000/api/chat/start", {
                 userId,
-                message: input,
+                message: messageText,
             });
             setMessages(response.data.messages);
         } catch (error) {
@@ -59,14 +83,23 @@ export default function Chatbot() {
         }
     };
 
-    // Handle "Enter" key press
+    const startChat = () => sendMessage(input);
+
     const handleKeyPress = (e) => {
         if (e.key === "Enter") startChat();
     };
 
+    const toggleListening = () => {
+        if (isListening) {
+            recognition.current.stop();
+        } else {
+            recognition.current.start();
+        }
+        setIsListening(!isListening);
+    };
+
     return (
         <div className="fixed bottom-5 right-5 z-50">
-            {/* Chat Button */}
             <button
                 onClick={toggleChat}
                 className="bg-pink-400 text-white p-4 rounded-full shadow-lg hover:bg-pink-500 transition-all"
@@ -74,14 +107,12 @@ export default function Chatbot() {
                 💬
             </button>
 
-            {/* Chat Box */}
             {isOpen && (
                 <div
                     className={`bg-pink-100 shadow-lg rounded-lg fixed bottom-20 right-5 flex flex-col border border-pink-300 transition-all ${
                         isMaximized ? "w-[80vw] h-[80vh]" : "w-80 h-96"
                     }`}
                 >
-                    {/* Header with Maximize/Minimize Buttons */}
                     <div className="bg-pink-400 text-white p-3 font-semibold text-center rounded-t-lg flex justify-between items-center">
                         <span>Chat with us!</span>
                         <div>
@@ -89,18 +120,17 @@ export default function Chatbot() {
                                 onClick={toggleMaximize}
                                 className="text-white hover:text-gray-200 mx-2"
                             >
-                                {isMaximized ? "🗗" : "🗖"} {/* Maximize/Minimize icons */}
+                                {isMaximized ? "🗗" : "🗖"}
                             </button>
                             <button
                                 onClick={toggleChat}
                                 className="text-white hover:text-gray-200"
                             >
-                                ✖️ {/* Close button */}
+                                ✖️
                             </button>
                         </div>
                     </div>
 
-                    {/* Chat Messages */}
                     <div className="flex-1 p-3 overflow-y-auto bg-pink-50">
                         {messages.map((msg, index) => (
                             <div
@@ -121,7 +151,6 @@ export default function Chatbot() {
                         )}
                     </div>
 
-                    {/* Input Area */}
                     <div className="flex border-t p-2 bg-pink-100">
                         <input
                             type="text"
@@ -131,6 +160,16 @@ export default function Chatbot() {
                             placeholder="Type a message..."
                             className="flex-1 p-2 border rounded-lg bg-white text-black"
                         />
+                        {isSpeechSupported && (
+                            <button
+                                onClick={toggleListening}
+                                className={`ml-2 p-2 rounded-lg ${
+                                    isListening ? "bg-red-500" : "bg-pink-400"
+                                } text-white hover:bg-pink-500`}
+                            >
+                                🎤
+                            </button>
+                        )}
                         <button
                             onClick={startChat}
                             className="bg-pink-400 text-white px-4 py-2 rounded-lg ml-2 hover:bg-pink-500"

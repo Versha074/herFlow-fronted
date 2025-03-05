@@ -8,6 +8,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import CycleForm from './pages/cycleForm';
 import WhatTrack from './pages/whatTrack';
 import MenstrualDashboard from './pages/Dashboard';
+import { config } from '@fortawesome/fontawesome-svg-core';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+
+
+// config.autoAddCss = false;
 
 
 function App() {

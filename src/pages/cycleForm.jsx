@@ -1,277 +1,251 @@
 import React from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { createCycle } from '../api/cycleApi';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import MicText from '../components/micText';
-// import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 
 const CycleForm = () => {
-  // const startListening = () => SpeechRecognition.startListening({ continuous: true });
-  // const stopListening = SpeechRecognition.stopListening();
-
-  // const { transcript, listening, browserSupportsSpeechRecognition} = useSpeechRecognition();
+  const navigate = useNavigate();
   const {
     register,
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
+      userId: "67c5e2852a40474f71166da0",
       cycleStartDate: '',
       cycleEndDate: '',
-      lutealPhaseLength: '',
-      symptoms: [{ date: '', flowIntensity: '', cramps: '', mood: '', bodyTemperature: '', cervicalMucus: '', ovulationTestResult: '', additionalNotes: '' }],
+      lutealPhaseLength: 14,
+      symptoms: [{
+        date: '',
+        flowIntensity: '',
+        cramps: '',
+        mood: '',
+        bodyTemperature: '',
+        cervicalMucus: '',
+        ovulationTestResult: 'Not Taken',
+        additionalNotes: '', // Add additionalNotes to default values
+      }],
       lifestyleFactors: {
         sleepHours: '',
-        stressLevel: '',
-        exerciseRoutine: '',
+        stressLevel: 'Moderate',
+        exerciseRoutine: 'Light'
       },
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'symptoms',
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: 'symptoms' });
+  const cycleStartDate = watch('cycleStartDate');
 
-  const onSubmit = (data) => {
-    console.log(data);
-    // TODO: Send data to backend via API
+  const onSubmit = async (data) => {
+    navigate('/dashboard');
+    // try {
+    //   const response = await createCycle(data);
+    //   toast.success('Cycle created successfully');
+    //   console.log(response);
+    // } catch (error) {
+    //   const message = error.response?.data?.message || 'Failed to create cycle';
+    //   toast.error(message);
+    // }
   };
+
+  // Enum options for dropdowns
+  const intensityOptions = ['Light', 'Medium', 'Heavy', 'Spotting'];
+  const crampsOptions = ['None', 'Mild', 'Moderate', 'Severe'];
+  const moodOptions = ['Happy', 'Irritable', 'Sad', 'Anxious', 'Neutral'];
+  const mucusOptions = ['Dry', 'Sticky', 'Creamy', 'Egg White', 'Watery'];
+  const testOptions = ['Positive', 'Negative', 'Not Taken'];
+  const stressOptions = ['Low', 'Moderate', 'High'];
+  const exerciseOptions = ['Sedentary', 'Light', 'Moderate', 'Intense'];
 
   return (
     <div className="bg-pink-50 min-h-screen p-6">
-      <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg">
-        <h2 className="text-3xl font-bold text-pink-700 mb-6 text-center">Log Your Cycle Data</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* Cycle Information */}
-          <section>
-            <h3 className="text-xl font-semibold text-pink-600 mb-4">Cycle Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Cycle Start Date</label>
-                <input
-                  type="date"
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                  {...register('cycleStartDate', { required: 'Cycle start date is required' })}
-                />
-                {errors.cycleStartDate && (
-                  <span className="text-pink-600 text-sm mt-1">{errors.cycleStartDate.message}</span>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Cycle End Date</label>
-                <input
-                  type="date"
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                  {...register('cycleEndDate', {
-                    required: 'Cycle end date is required',
-                    validate: (value) =>
-                      new Date(value) > new Date(document.getElementById('cycleStartDate')?.value) || 'End date must be after start date',
-                  })}
-                />
-                {errors.cycleEndDate && (
-                  <span className="text-pink-600 text-sm mt-1">{errors.cycleEndDate.message}</span>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Luteal Phase Length (days, optional)</label>
-                <input
-                  type="number"
-                  min="1"
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                  {...register('lutealPhaseLength')}
-                />
-              </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 max-w-2xl mx-auto">
+        {/* Cycle Dates Section */}
+        <section className="bg-white p-6 rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold mb-4">Cycle Dates</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Start Date *</label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded"
+                // {...register('cycleStartDate', { required: 'Required' })}
+              />
+              {errors.cycleStartDate && (
+                <span className="text-red-500 text-sm">{errors.cycleStartDate.message}</span>
+              )}
             </div>
-          </section>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">End Date *</label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded"
+                {...register('cycleEndDate', {
+                  // required: 'Required',
+                  // validate: (value) => !cycleStartDate || new Date(value) > new Date(cycleStartDate) || 'Must be after start date'
+                })}
+              />
+              {errors.cycleEndDate && (
+                <span className="text-red-500 text-sm">{errors.cycleEndDate.message}</span>
+              )}
+            </div>
+          </div>
+        </section>
 
-          {/* Symptoms */}
-          <section>
-            <h3 className="text-xl font-semibold text-pink-600 mb-4">Symptoms</h3>
-            {fields.map((field, index) => (
-              <div key={field.id} className="p-4 bg-pink-50 rounded-lg mb-4 shadow-sm border border-pink-200">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Date</label>
-                    <input
-                      type="date"
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                      {...register(`symptoms.${index}.date`, { required: 'Symptom date is required' })}
-                    />
-                    {errors.symptoms?.[index]?.date && (
-                      <span className="text-pink-600 text-sm mt-1">{errors.symptoms[index].date.message}</span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Flow Intensity</label>
-                      <select
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                        {...register(`symptoms.${index}.flowIntensity`)}
-                      >
-                        <option value="">Select...</option>
-                        <option value="Light">Light</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Heavy">Heavy</option>
-                        <option value="Spotting">Spotting</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Cramps</label>
-                      <select
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                        {...register(`symptoms.${index}.cramps`)}
-                      >
-                        <option value="">Select...</option>
-                        <option value="None">None</option>
-                        <option value="Mild">Mild</option>
-                        <option value="Moderate">Moderate</option>
-                        <option value="Severe">Severe</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Mood</label>
-                      <select
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                        {...register(`symptoms.${index}.mood`)}
-                      >
-                        <option value="">Select...</option>
-                        <option value="Happy">Happy</option>
-                        <option value="Irritable">Irritable</option>
-                        <option value="Sad">Sad</option>
-                        <option value="Anxious">Anxious</option>
-                        <option value="Neutral">Neutral</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Body Temperature (°C)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                      {...register(`symptoms.${index}.bodyTemperature`)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Cervical Mucus</label>
-                      <select
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                        {...register(`symptoms.${index}.cervicalMucus`)}
-                      >
-                        <option value="">Select...</option>
-                        <option value="Dry">Dry</option>
-                        <option value="Sticky">Sticky</option>
-                        <option value="Creamy">Creamy</option>
-                        <option value="Egg White">Egg White</option>
-                        <option value="Watery">Watery</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Ovulation Test Result</label>
-                      <select
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                        {...register(`symptoms.${index}.ovulationTestResult`)}
-                      >
-                        <option value="">Select...</option>
-                        <option value="Positive">Positive</option>
-                        <option value="Negative">Negative</option>
-                        <option value="Not Taken">Not Taken</option>
-                      </select>
-                    </div>
-                  </div>
-                  {/* <div>
-                    <label className="block text-sm font-medium text-gray-700">Additional Notes</label>
-                    <textarea
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                      rows="3"
-                      {...register(`symptoms.${index}.additionalNotes`)}
-                    />
-                  </div> */}
-                  <MicText register={register} index={index}/>
+        {/* Symptoms Section */}
+        <section className="bg-white p-6 rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold mb-4">Daily Symptoms</h2>
+          {fields.map((field, index) => (
+            <div key={field.id} className="border-b pb-4 mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-medium">Day {index + 1}</h3>
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="text-red-500 text-sm"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Date *</label>
+                  <input
+                    type="date"
+                    className="w-full p-2 border rounded"
+                    // {...register(`symptoms.${index}.date`, { required: 'Required' })}
+                  />
                 </div>
-                <button
-                  type="button"
-                  className="mt-4 text-sm text-pink-600 hover:text-pink-800 transition duration-200"
-                  onClick={() => remove(index)}
-                >
-                  Remove Symptom Log
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="w-full md:w-auto px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600 transition duration-200 shadow-md"
-              onClick={() =>
-                append({
-                  date: '',
-                  flowIntensity: '',
-                  cramps: '',
-                  mood: '',
-                  bodyTemperature: '',
-                  cervicalMucus: '',
-                  ovulationTestResult: '',
-                  additionalNotes: '',
-                })
-              }
-            >
-              Add Symptom Log
-            </button>
-          </section>
 
-          {/* Lifestyle Factors */}
-          <section>
-            <h3 className="text-xl font-semibold text-pink-600 mb-4">Lifestyle Factors</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Average Sleep Hours</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="24"
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                  {...register('lifestyleFactors.sleepHours')}
+                {/* Dropdown Fields */}
+                <SelectField 
+                  label="Flow Intensity"
+                  name={`symptoms.${index}.flowIntensity`}
+                  options={intensityOptions}
+                  register={register}
+                  // required
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Stress Level</label>
-                <select
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                  {...register('lifestyleFactors.stressLevel')}
-                >
-                  <option value="">Select...</option>
-                  <option value="Low">Low</option>
-                  <option value="Moderate">Moderate</option>
-                  <option value="High">High</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Exercise Routine</label>
-                <select
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
-                  {...register('lifestyleFactors.exerciseRoutine')}
-                >
-                  <option value="">Select...</option>
-                  <option value="Sedentary">Sedentary</option>
-                  <option value="Light">Light</option>
-                  <option value="Moderate">Moderate</option>
-                  <option value="Intense">Intense</option>
-                </select>
+
+                <SelectField
+                  label="Cramps"
+                  name={`symptoms.${index}.cramps`}
+                  options={crampsOptions}
+                  register={register}
+                />
+
+                <SelectField
+                  label="Mood"
+                  name={`symptoms.${index}.mood`}
+                  options={moodOptions}
+                  register={register}
+                />
+
+                <SelectField
+                  label="Cervical Mucus"
+                  name={`symptoms.${index}.cervicalMucus`}
+                  options={mucusOptions}
+                  register={register}
+                />
+
+                <SelectField
+                  label="Ovulation Test"
+                  name={`symptoms.${index}.ovulationTestResult`}
+                  options={testOptions}
+                  register={register}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Body Temp (°C)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="w-full p-2 border rounded"
+                    {...register(`symptoms.${index}.bodyTemperature`)}
+                  />
+                </div>
+
+                {/* Additional Notes Text Area */}
+                <div className="col-span-full">
+                  <label className="block text-sm font-medium mb-1">Additional Notes</label>
+                  <textarea
+                    className="w-full p-2 border rounded"
+                    {...register(`symptoms.${index}.additionalNotes`)}
+                  />
+                </div>
               </div>
             </div>
-          </section>
+          ))}
 
-          {/* Submit Button */}
           <button
-            type="submit"
-            className="w-full px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition duration-300 shadow-md"
+            type="button"
+            onClick={() => append({ date: '', flowIntensity: '', additionalNotes: '' })}
+            className="mt-4 text-pink-600 hover:text-pink-700 text-sm"
           >
-            Submit Cycle Data
+            + Add Another Day
           </button>
-        </form>
-      </div>
+        </section>
+
+        {/* Lifestyle Factors Section */}
+        <section className="bg-white p-6 rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold mb-4">Lifestyle Factors</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Daily Sleep Hours</label>
+              <input
+                type="number"
+                className="w-full p-2 border rounded"
+                {...register('lifestyleFactors.sleepHours')}
+              />
+            </div>
+
+            <SelectField
+              label="Stress Level"
+              name="lifestyleFactors.stressLevel"
+              options={stressOptions}
+              register={register}
+            />
+
+            <SelectField
+              label="Exercise Routine"
+              name="lifestyleFactors.exerciseRoutine"
+              options={exerciseOptions}
+              register={register}
+            />
+          </div>
+        </section>
+
+        <button
+          type="submit"
+          className="w-full bg-pink-600 text-white py-2 px-4 rounded hover:bg-pink-700 transition-colors"
+        >
+          Save Cycle Data
+        </button>
+      </form>
     </div>
   );
 };
 
-export default CycleForm
+// Reusable Select Component
+const SelectField = ({ label, name, options, register, required }) => (
+  <div>
+    <label className="block text-sm font-medium mb-1">{label}</label>
+    <select
+      className="w-full p-2 border rounded bg-white"
+      // {...register(name, { required: required && 'Required' })}
+    >
+      {options.map(option => (
+        <option key={option} value={option}>{option}</option>
+      ))}
+    </select>
+  </div>
+);
+
+export default CycleForm;
