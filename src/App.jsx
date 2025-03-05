@@ -21,6 +21,7 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
+              {/* Give z-index to highest  in tailwind to home so that chatbot does not appear above home components */}
               <Home />
             </ProtectedRoute>
           }
