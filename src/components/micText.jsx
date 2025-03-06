@@ -4,11 +4,10 @@ import { Mic, MicOff } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 
 const MicText = ({ index }) => {
-  const { register, setValue, getValues } = useFormContext(); // Access form methods
+  const { register, setValue, getValues } = useFormContext();
 
   const { listening, startListening, stopListening } = useSpeechToText({
     onTranscriptChange: (newTranscript) => {
-      // Append new transcript to existing form value
       const currentValue = getValues(`symptoms.${index}.additionalNotes`) || "";
       setValue(`symptoms.${index}.additionalNotes`, currentValue + newTranscript, {
         shouldValidate: true,
@@ -24,7 +23,6 @@ const MicText = ({ index }) => {
           className="mt-1 block w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-pink-500 transition duration-200"
           rows="3"
           {...register(`symptoms.${index}.additionalNotes`)}
-          // No `value` or `onChange` here; let React Hook Form handle it
         />
         <button
           type="button"

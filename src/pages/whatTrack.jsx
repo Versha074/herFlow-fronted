@@ -28,7 +28,7 @@ export default function WhatTrack() {
                             slidesPerView: 2,
                         },
                     }}
-                >
+                >   
                     {/* Menstrual Cycle Slide */}
                     <SwiperSlide>
                         <Link to="/cycle" className="group cursor-pointer">

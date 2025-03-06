@@ -16,6 +16,8 @@ function Login() {
     try {
       const data = await login({ email, password });
       dispatch(loginSuccess(data.user));
+      localStorage.setItem('token', data.token);
+      // console.log(data)
       toast.success('Logged in successfully');
       navigate('/track');
     } catch (error) {

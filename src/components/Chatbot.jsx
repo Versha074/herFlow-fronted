@@ -1,7 +1,39 @@
+// Frontend (Chatbot.jsx)
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
+import { getCycleByUserId } from "../api/cycleApi";
+// import { getDecodedToken } from "../utils/auth";
 
 export default function Chatbot() {
+    const getDecodedToken = () => {
+        try {
+            // Check if token exists in local storage (common approach)
+            const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+            console.log(token)
+            if (!token) {
+                console.warn("No token found in storage");
+                return null;
+            }
+
+            // Decode the token
+            const decodedToken = jwtDecode(token);
+            console.log(decodedToken);
+            // Validate token expiration
+            const currentTime = Date.now() / 1000; // Convert to seconds
+            if (decodedToken.exp && decodedToken.exp < currentTime) {
+                console.warn("Token has expired");
+                localStorage.removeItem("token"); // Clear expired token
+                return null;
+            }
+
+            return decodedToken;
+        } catch (error) {
+            console.error("Token decoding failed:", error);
+            return null;
+        }
+    };
+    const [cycleData, setCycleData] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
     const [messages, setMessages] = useState([]);
@@ -9,10 +41,10 @@ export default function Chatbot() {
     const [loading, setLoading] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [isSpeechSupported, setIsSpeechSupported] = useState(true);
-    const userId = "67c5e2852a40474f71166da0";
     const recognition = useRef(null);
+    const token = getDecodedToken();
+    const userId = token?.id;
 
-    // Initialize speech recognition
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
@@ -40,49 +72,62 @@ export default function Chatbot() {
         }
     }, []);
 
-    // Fetch chat history on component mount
     useEffect(() => {
-        const fetchChatHistory = async () => {
+        const fetchInitialData = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/chat/history/${userId}`);
-                setMessages(response.data);
+                // Fetch chat history
+                const chatResponse = await axios.get(`http://localhost:5000/api/chat/history/${userId}`);
+                setMessages(chatResponse.data);
+
+                // Fetch cycle data
+                const cycleResponse = await getCycleByUserId(userId);
+                setCycleData(cycleResponse);
             } catch (error) {
-                console.error("Error fetching chat history:", error);
+                console.error("Initial data load error:", error);
+                setMessages([{
+                    text: "Welcome! I can help with cycle-related queries. Please ensure your cycle data is updated.",
+                    sender: "bot"
+                }]);
             }
         };
-        fetchChatHistory();
-    }, [userId]);
 
+        if (userId) fetchInitialData();
+    }, [userId]);
+    const toggleMaximize = () => setIsMaximized(!isMaximized);
     const toggleChat = () => {
         setIsOpen(!isOpen);
         if (!isOpen) setIsMaximized(false);
     };
 
-    const toggleMaximize = () => setIsMaximized(!isMaximized);
-
     const sendMessage = async (messageText) => {
-        if (!messageText.trim()) return;
+        if (!messageText.trim() || !userId) return;
 
         const userMessage = { text: messageText, sender: "user" };
-        setMessages((prev) => [...prev, userMessage]);
+        setMessages(prev => [...prev, userMessage]);
         setInput("");
         setLoading(true);
+
+        const cycleData = await getCycleByUserId(userId);
+        console.log(cycleData)
 
         try {
             const response = await axios.post("http://localhost:5000/api/chat/start", {
                 userId,
                 message: messageText,
+                cycleData // Send cycle data with the message
             });
             setMessages(response.data.messages);
         } catch (error) {
-            console.error("Error starting chat:", error);
-            const errorMessage = { text: "Sorry, something went wrong. Please try again.", sender: "bot" };
-            setMessages((prev) => [...prev, errorMessage]);
+            console.error("Chat error:", error);
+            const errorMessage = {
+                text: "I'm having trouble responding right now. Please try again later.",
+                sender: "bot"
+            };
+            setMessages(prev => [...prev, errorMessage]);
         } finally {
             setLoading(false);
         }
     };
-
     const startChat = () => sendMessage(input);
 
     const handleKeyPress = (e) => {
@@ -98,7 +143,12 @@ export default function Chatbot() {
         setIsListening(!isListening);
     };
 
+
+    // Rest of the component remains the same as provided in the question
+    // Only update the sendMessage function and add cycle data handling
+
     return (
+        // Existing JSX structure remains the same
         <div className="fixed bottom-5 right-5 z-50">
             <button
                 onClick={toggleChat}
@@ -109,12 +159,11 @@ export default function Chatbot() {
 
             {isOpen && (
                 <div
-                    className={`bg-pink-100 shadow-lg rounded-lg fixed bottom-20 right-5 flex flex-col border border-pink-300 transition-all ${
-                        isMaximized ? "w-[80vw] h-[80vh]" : "w-80 h-96"
-                    }`}
+                    className={`bg-pink-100 shadow-lg rounded-lg fixed bottom-20 right-5 flex flex-col border border-pink-300 transition-all ${isMaximized ? "w-[80vw] h-[80vh]" : "w-80 h-96"
+                        }`}
                 >
                     <div className="bg-pink-400 text-white p-3 font-semibold text-center rounded-t-lg flex justify-between items-center">
-                        <span>Chat with us!</span>
+                        <span>Pookies AI</span>
                         <div>
                             <button
                                 onClick={toggleMaximize}
@@ -135,11 +184,10 @@ export default function Chatbot() {
                         {messages.map((msg, index) => (
                             <div
                                 key={index}
-                                className={`p-2 my-1 max-w-[80%] rounded-lg ${
-                                    msg.sender === "bot"
+                                className={`p-2 my-1 max-w-[80%] rounded-lg ${msg.sender === "bot"
                                         ? "bg-pink-400 text-white self-start"
                                         : "bg-pink-200 text-black self-end ml-auto"
-                                }`}
+                                    }`}
                             >
                                 {msg.text}
                             </div>
@@ -163,9 +211,8 @@ export default function Chatbot() {
                         {isSpeechSupported && (
                             <button
                                 onClick={toggleListening}
-                                className={`ml-2 p-2 rounded-lg ${
-                                    isListening ? "bg-red-500" : "bg-pink-400"
-                                } text-white hover:bg-pink-500`}
+                                className={`ml-2 p-2 rounded-lg ${isListening ? "bg-red-500" : "bg-pink-400"
+                                    } text-white hover:bg-pink-500`}
                             >
                                 🎤
                             </button>

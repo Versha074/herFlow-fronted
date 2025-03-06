@@ -10,6 +10,10 @@ import WhatTrack from './pages/whatTrack';
 import MenstrualDashboard from './pages/Dashboard';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
+import ExercisePage from './pages/Exercises';
+import DietPlanGenerator from './pages/dietGenerator';
+import Calendar from './pages/Calendar';
+import MoodTracker from './pages/MoodTracker';
 
 
 // config.autoAddCss = false;
@@ -36,6 +40,11 @@ function App() {
           <Route path="cycle" element={<CycleForm />} />
           <Route path="profile" element={<Profile />} />
           <Route path="mensturalDashboard" element={<MenstrualDashboard />} />
+          <Route path="exercises" element={<ExercisePage />} />
+          <Route path="dietgenerator" element={<DietPlanGenerator />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="moodtrcker" element={<MoodTracker />} />
+          <Route path="proofile" element={<Profile />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>

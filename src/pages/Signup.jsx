@@ -16,6 +16,7 @@ function Signup() {
     e.preventDefault();
     try {
       const data = await signup({ username:name, email, password });
+      localStorage.setItem('token', data.token);
       dispatch(signupSuccess(data.user));
       toast.success('Signed up successfully');
       navigate('/track');

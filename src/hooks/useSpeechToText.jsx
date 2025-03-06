@@ -1,60 +1,53 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 const useSpeechToText = ({ onTranscriptChange }) => {
   const [listening, setListening] = useState(false);
-  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  const [transcript, setTranscript] = useState('');
 
   useEffect(() => {
-    recognition.continuous = true; // Keeps listening until stopped
-    recognition.interimResults = true; // Allows interim results
-    recognition.lang = "en-US";
+    let recognition;
+    if (window.webkitSpeechRecognition) {
+      recognition = new window.webkitSpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
 
-    recognition.onstart = () => {
-      console.log("Speech recognition started");
-      setListening(true);
-    };
-
-    recognition.onend = () => {
-      console.log("Speech recognition ended");
-      setListening(false);
-    };
-
-    recognition.onresult = (event) => {
-      let finalTranscript = "";
-      // Accumulate only final results to avoid interim flickering
-      for (let i = 0; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptPart = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            setTranscript((prev) => prev + transcriptPart + ' ');
+            onTranscriptChange(transcriptPart + ' ');
+          } else {
+            interimTranscript += transcriptPart;
+          }
         }
-      }
-      // Call the callback with the accumulated final transcript
-      if (finalTranscript) {
-        onTranscriptChange(finalTranscript);
-      }
-    };
+      };
 
-    recognition.onerror = (event) => {
-      console.error("Speech recognition error:", event.error);
-      setListening(false); // Reset listening state on error
-    };
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setListening(false);
+      };
+    }
 
-    // Cleanup: stop recognition when the component unmounts
+    if (listening) {
+      recognition.start();
+    } else {
+      if (recognition) recognition.stop();
+    }
+
     return () => {
-      recognition.stop();
+      if (recognition) recognition.stop();
     };
-  }, [onTranscriptChange]); // Dependency on callback to ensure updates
+  }, [listening, onTranscriptChange]);
 
-  const startListening = () => {
-    console.log("Starting recognition");
-    recognition.start();
+  return {
+    listening,
+    startListening: () => setListening(true),
+    stopListening: () => setListening(false),
+    transcript,
   };
-
-  const stopListening = () => {
-    console.log("Stopping recognition");
-    recognition.stop();
-  };
-
-  return { listening, startListening, stopListening };
 };
 
 export default useSpeechToText;
